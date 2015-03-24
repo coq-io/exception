@@ -25,11 +25,11 @@ Definition effect (E : Effect.t) (Exc : Type) : Effect.t :=
 
 Definition lift {E : Effect.t} {Exc A : Type} (x : C.t E A)
   : C.t (effect E Exc) A :=
-  C.run (fun c => C.Call (effect E Exc) (Command.Ok c)) x.
+  C.run (fun c => call (effect E Exc) (Command.Ok c)) x.
 
 Definition raise {E : Effect.t} {Exc A : Type} (exc : Exc)
   : C.t (effect E Exc) A :=
-  let! absurd := C.Call (effect E Exc) (Command.Exc exc) in
+  let! absurd := call (effect E Exc) (Command.Exc exc) in
   match absurd with end.
 
 Fixpoint run {E : Effect.t} {Exc A : Type} (x : C.t (effect E Exc) A)
@@ -37,7 +37,7 @@ Fixpoint run {E : Effect.t} {Exc A : Type} (x : C.t (effect E Exc) A)
   match x with
   | C.Ret _ x => ret @@ inl x
   | C.Call (Command.Ok c) =>
-    let! answer := C.Call E c in
+    let! answer := call E c in
     ret @@ inl answer
   | C.Call (Command.Exc exc) => ret @@ inr [exc]
   | C.Let _ _ x f =>
