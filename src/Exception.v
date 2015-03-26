@@ -2,6 +2,7 @@ Require Import Coq.Lists.List.
 Require Import FunctionNinjas.All.
 Require Import Io.All.
 Require Io.List.
+Require Io.Run.
 
 Import ListNotations.
 Import C.Notations.
@@ -32,35 +33,16 @@ Definition raise {E : Effect.t} {Exc A : Type} (exc : Exc)
   let! absurd := call (effect E Exc) (Command.Exc exc) in
   match absurd with end.
 
-Fixpoint run {E : Effect.t} {Exc A : Type} (x : C.t (effect E Exc) A)
+Definition run {E : Effect.t} {Exc A : Type} (x : C.t (effect E Exc) A)
   : C.t E (A + list Exc) :=
-  match x with
-  | C.Ret _ x => ret @@ inl x
-  | C.Call (Command.Ok c) =>
-    let! answer := call E c in
-    ret @@ inl answer
-  | C.Call (Command.Exc exc) => ret @@ inr [exc]
-  | C.Let _ _ x f =>
-    let! x := run x in
-    match x with
-    | inl x => run (f x)
-    | inr exc => ret @@ inr exc
-    end
-  | C.Join _ _ x y =>
-    let! xy := join (run x) (run y) in
-    match xy with
-    | (inl x, inl y) => ret @@ inl (x, y)
-    | (inr exc, inl _) | (inl _, inr exc) => ret @@ inr exc
-    | (inr exc_x, inr exc_y) => ret @@ inr (exc_x ++ exc_y)
-    end
-  | C.First _ _ x y =>
-    let! xy := first (run x) (run y) in
-    match xy with
-    | inl (inl x) => ret @@ inl @@ inl x
-    | inr (inl y) => ret @@ inl @@ inr y
-    | inl (inr exc) | inr (inr exc) => ret @@ inr exc
-    end
-  end.
+  Run.exception (fun (c : Effect.command (effect E Exc)) =>
+    match c with
+    | Command.Ok c =>
+      let! answer := call E c in
+      ret @@ inl answer
+    | Command.Exc exc => ret @@ inr [exc]
+    end)
+    (List.app (A := Exc)) x.
 
 Definition handle {E : Effect.t} {Exc : Type} (run_exc : Exc -> C.t E unit)
   (x : C.t E (unit + list Exc)) : C.t E unit :=
