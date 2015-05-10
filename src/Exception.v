@@ -33,7 +33,7 @@ Definition raise {E : Effect.t} {Exc A : Type} (exc : Exc)
   let! absurd := call (effect E Exc) (Command.Exc exc) in
   match absurd with end.
 
-Definition run {E : Effect.t} {Exc A : Type} (x : C.t (effect E Exc) A)
+Definition eval {E : Effect.t} {Exc A : Type} (x : C.t (effect E Exc) A)
   : C.t E (A + list Exc) :=
   Evaluate.exception (fun (c : Effect.command (effect E Exc)) =>
     match c with
