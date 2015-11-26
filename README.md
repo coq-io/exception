@@ -1,2 +1,4 @@
-# io-exception
-Abstract your errors into exceptions.
+# IO Exception
+> Abstract your errors into exceptions.
+
+    opam install coq-io-exception
